@@ -2120,11 +2120,16 @@
       /* ── Success modal ── */
       function showSuccessModal(onConfirm) {
         const overlay = document.getElementById("successModalOverlay");
-        overlay.style.display = "flex";
-        overlay.querySelector(".sm-confirm-btn").onclick = function() {
-          overlay.style.display = "none";
+        if (overlay) {
+          overlay.style.display = "flex";
+          overlay.querySelector(".sm-confirm-btn").onclick = function() {
+            overlay.style.display = "none";
+            onConfirm();
+          };
+        } else {
+          alert("Registration submitted successfully!");
           onConfirm();
-        };
+        }
       }
 
       /* ── Loading overlay ── */
@@ -2224,9 +2229,13 @@
 
       function showDuplicateModal(idx) {
         const overlay = document.getElementById("duplicateModalOverlay");
-        overlay.querySelector(".dm-index-val").textContent = idx;
-        overlay.style.display = "flex";
-        overlay.querySelector(".dm-ok-btn").onclick = () => { overlay.style.display = "none"; };
+        if (overlay) {
+          overlay.querySelector(".dm-index-val").textContent = idx;
+          overlay.style.display = "flex";
+          overlay.querySelector(".dm-ok-btn").onclick = () => { overlay.style.display = "none"; };
+        } else {
+          alert("Index number " + idx + " is already registered.");
+        }
       }
 
       function generateIndividualForm() {
