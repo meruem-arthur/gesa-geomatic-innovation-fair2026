@@ -2129,7 +2129,8 @@
 
       /* ── Loading overlay ── */
       function setLoading(on) {
-        document.getElementById("loadingOverlay").style.display = on ? "flex" : "none";
+        const el = document.getElementById("loadingOverlay");
+        if (el) el.style.display = on ? "flex" : "none";
       }
 
       async function submitIndividual() {
