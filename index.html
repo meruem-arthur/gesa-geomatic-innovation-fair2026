@@ -2077,19 +2077,11 @@
         return "GIF2026-" + Date.now().toString(36).toUpperCase();
       }
 
-      /* ── Supabase config ── */
-      /* ── Neon database config ── */
-      const NEON_URL = "https://ep-lucky-bar-atbl9w3x-pooler.c-9.us-east-1.aws.neon.tech";
-      const NEON_CONN = "postgresql://neondb_owner:npg_tsS6AdRYHC2Z@ep-lucky-bar-atbl9w3x-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require";
-
+      /* ── Database config — queries go through Netlify Function ── */
       async function neonQuery(sql, params = []) {
-        const res = await fetch("https://ep-lucky-bar-atbl9w3x-pooler.c-9.us-east-1.aws.neon.tech/sql", {
+        const res = await fetch("/.netlify/functions/db", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer npg_tsS6AdRYHC2Z",
-            "Neon-Connection-String": NEON_CONN
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: sql, params })
         });
         if (!res.ok) throw new Error(await res.text());
