@@ -2077,44 +2077,44 @@
         return "GIF2026-" + Date.now().toString(36).toUpperCase();
       }
 
-      /* ── Supabase config ── */
-      const SUPA_URL = "https://rbbqncedmwlvixeewins.supabase.co";
-      const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiYnFuY2VkbXdsdml4ZWV3aW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NjY5NzUsImV4cCI6MjA5NDU0Mjk3NX0.RmfrVUinUK4sGuAZGNF5s6IvWNu24EGRowDzUWUNPqs";
-
-      async function supaFetch(path, opts = {}) {
-        const res = await fetch(SUPA_URL + path, {
-          ...opts,
-          headers: {
-            "apikey": SUPA_KEY,
-            "Authorization": "Bearer " + SUPA_KEY,
-            "Content-Type": "application/json",
-            "Prefer": opts.prefer || "",
-            ...(opts.headers || {})
-          }
+      /* ── Database config — queries go through Netlify Function ── */
+      async function neonQuery(sql, params = []) {
+        const res = await fetch("/.netlify/functions/db", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: sql, params })
         });
-        return res;
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
       }
 
-      /* ── Check if index already registered (checks Supabase) ── */
+      /* ── Check if index already registered ── */
       async function isIndexTaken(idx) {
         try {
-          const res = await supaFetch(`/rest/v1/registrations?index_number=eq.${encodeURIComponent(idx)}&select=index_number`);
-          const data = await res.json();
-          return Array.isArray(data) && data.length > 0;
+          const data = await neonQuery(
+            "SELECT index_number FROM registrations WHERE index_number = $1 LIMIT 1",
+            [idx]
+          );
+          return data.rows && data.rows.length > 0;
         } catch(e) { return false; }
       }
 
-      /* ── Save registration to Supabase ── */
+      /* ── Save registration to Neon ── */
       async function saveRegistration(payload) {
-        const res = await supaFetch("/rest/v1/registrations", {
-          method: "POST",
-          prefer: "return=minimal",
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(err);
-        }
+        await neonQuery(
+          `INSERT INTO registrations
+            (type, form_id, full_name, index_number, all_indexes, email, phone,
+             project_title, project_desc, member_count, members_json, submitted_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          [
+            payload.type, payload.form_id, payload.full_name,
+            payload.index_number, payload.all_indexes || "",
+            payload.email, payload.phone,
+            payload.project_title, payload.project_desc,
+            payload.member_count || null, payload.members_json || null,
+            payload.submitted_at
+          ]
+        );
       }
 
       /* ── Success modal ── */
