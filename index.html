@@ -2077,12 +2077,12 @@
         return "GIF2026-" + Date.now().toString(36).toUpperCase();
       }
 
-      /* ── Database config — queries go through Netlify Function ── */
-      async function neonQuery(sql, params = []) {
-        const res = await fetch("/.netlify/functions/db", {
+      /* ── API helper — talks to Vercel serverless functions ── */
+      async function api(path, data) {
+        const res = await fetch("/api/" + path, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: sql, params })
+          body: JSON.stringify(data)
         });
         if (!res.ok) throw new Error(await res.text());
         return res.json();
@@ -2091,30 +2091,14 @@
       /* ── Check if index already registered ── */
       async function isIndexTaken(idx) {
         try {
-          const data = await neonQuery(
-            "SELECT index_number FROM registrations WHERE index_number = $1 LIMIT 1",
-            [idx]
-          );
-          return data.rows && data.rows.length > 0;
+          const data = await api("check-index", { index_number: idx });
+          return !!data.taken;
         } catch(e) { return false; }
       }
 
       /* ── Save registration to Neon ── */
       async function saveRegistration(payload) {
-        await neonQuery(
-          `INSERT INTO registrations
-            (type, form_id, full_name, index_number, all_indexes, email, phone,
-             project_title, project_desc, member_count, members_json, submitted_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-          [
-            payload.type, payload.form_id, payload.full_name,
-            payload.index_number, payload.all_indexes || "",
-            payload.email, payload.phone,
-            payload.project_title, payload.project_desc,
-            payload.member_count || null, payload.members_json || null,
-            payload.submitted_at
-          ]
-        );
+        await api("register", payload);
       }
 
       /* ── Success modal ── */

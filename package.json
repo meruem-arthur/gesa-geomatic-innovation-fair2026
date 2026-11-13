@@ -1,4 +1,7 @@
 {
+  "name": "gesa-geomatic-innovation-fair2026",
+  "version": "1.0.0",
+  "private": true,
   "dependencies": {
     "pg": "^8.21.0"
   }
